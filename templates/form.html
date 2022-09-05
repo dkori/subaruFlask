@@ -1,10 +1,23 @@
 <form action="/data" method = "POST">
+    <p>This is a very basic tool to help you shop for Subaru models nearby. Searches may take up to a couple minutes to execute.</p>
     <p>Enter your zip code and the maximum distance you're willing to travel to pick up your subaru</p>
     <p>Zip Code <input type = "text" name = "zip_code" /></p>
     <p>Maximum travel distance (miles) <input type = "text" name = "max_distance" /></p>
-    <p> Enter a keyword (case sensitive) or leave it back if you don't want to filter your results</p>
-    <p>Model <input type = "text" name = "model" /></p>
-    <p>Edition (Limited, Premium, etc) <input type = "text" name = "edition"/></p>
-    <p>Color <input type= "text" name = "exteriorColor" /></p>
+    <p><select name="model" id="model">
+        {% for model in models %}
+            <option value="{{model}}" SELECTED>{{model}}</option>"
+        {% endfor %}
+    </select></p>
+    <p></p>
+    <p>Enter Trim keyword, such as "Limited", "Premium", "Sport" (or leave blank for all): <input type = "text" name = "edition"/></p>
+    <p></p>
+    <p>Enter Color Choice keyword (or leave blank for all)<input type= "text" name = "exteriorColor" /></p>
+    <p></p>
+    <p>New, Pre-owned, or both?</p>
+    <p><select name = "condition" id="condition">
+        <option value="New">New</option>
+        <option value="Pre-Owned">Pre-Owned</option>
+        <option value="Both">Both</option>
+    </select></p>
     <p><input type = "submit" value = "Submit" /></p>
 </form>

@@ -67,7 +67,7 @@ def get_all_inventory(dealer_frame, filter_dict={}):
         inventory_url = '{dealer_url}/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_ALL:inventory-data-bus1/getInventory'.format(dealer_url=dealer_url)
         # apply the model filter, I don't know endpoints for other filters so filter those downstream
         if filter_dict['model'] != '':
-            inventory_url += '?model=' + filter_dict['model'].replace(' ', '_') # todo: fix to reformat any str for url
+            inventory_url += '?model=' + filter_dict['model']
         # call api for inventory_url to get inventory
         inventory_response = requests.get(inventory_url)
         if inventory_response.status_code==200:
@@ -78,8 +78,13 @@ def get_all_inventory(dealer_frame, filter_dict={}):
             dealer_inventory['id'] = dealer_row['id']
             all_inventory_list.append(dealer_inventory)
     all_inventory = pd.concat(all_inventory_list)
+    # limit to only new or used based on the user's choice
+    print(filter_dict['condition'])
+    if filter_dict['condition'] != 'Both':
+        print("condition filter triggered")
+        all_inventory = all_inventory[all_inventory['condition'].str.contains(filter_dict['condition'])]
     # loop through remaining filters in filter_frame
     for key in filter_dict.keys():
-        if key not in  ['model', 'zip_code', 'max_distance'] and filter_dict[key] != '':
+        if key not in ['model', 'zip_code', 'max_distance', 'condition'] and filter_dict[key] != '':
             all_inventory = all_inventory[all_inventory[key].str.contains(filter_dict[key], na=False)]
     return all_inventory.merge(dealer_frame, on='id')
