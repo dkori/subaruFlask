@@ -12,7 +12,6 @@ def get_dealerships(zip_code, max_distance):
         dealer_json = dealer_response.json()
     else:
         return pd.DataFrame({'error': ['Failed to retrieve dealership distances. Please try again later']})
-
     # create a recursive function that flattens out each item in the dealer_json
     def flatten_recurs(obj):
         flat_dict = {}
@@ -85,27 +84,37 @@ def get_all_inventory(dealer_frame, filter_dict={}):
         if inventory_response.status_code==200:
             try:
                 inventory = inventory_response.json()['inventory']
-                # create dataFrame of parsed inventory info
-                dealer_inventory = pd.DataFrame([parse_inventory_model(x, dealer_url) for x in inventory])
-                # add dealer_id to dealer_inventory
-                dealer_inventory['id'] = dealer_row['id']
-                all_inventory_list.append(dealer_inventory)
             except:
                 print('inventory api call did not return valid json')
                 print(inventory_response.status_code)
                 print(inventory_response.url)
+                try:
+                    # create dataFrame of parsed inventory info
+                    dealer_inventory = pd.DataFrame([parse_inventory_model(x, dealer_url) for x in inventory])
+                    # add dealer_id to dealer_inventory
+                    dealer_inventory['id'] = dealer_row['id']
+                    all_inventory_list.append(dealer_inventory)
+                except:
+                    print("inventory api returned valid json, but parse_inventory_model function failed")
                 #print(inventory_response.text)
     # return error data frame if all inventory status codes failed
     if not any([x==200] for x in status_codes):
         return pd.DataFrame({'error':['Succeeded in retrieving dealer list, but all API calls for inventory failed. Please try again later']})
-    all_inventory = pd.concat(all_inventory_list)
-    # limit to only new or used based on the user's choice
-    print(filter_dict['condition'])
-    if filter_dict['condition'] != 'Both':
-        print("condition filter triggered")
-        all_inventory = all_inventory[all_inventory['condition'].str.contains(filter_dict['condition'])]
-    # loop through remaining filters in filter_frame
-    for key in filter_dict.keys():
-        if key not in ['model', 'zip_code', 'max_distance', 'condition'] and filter_dict[key] != '':
-            all_inventory = all_inventory[all_inventory[key].str.contains(filter_dict[key], na=False)]
-    return all_inventory.merge(dealer_frame, on='id')
+    else:
+        print("{} dealerships checked, no inventory matching criteria found".format(
+            str(len([x for x in status_codes if x==200]))))
+    if len(all_inventory_list)>=1:
+        all_inventory = pd.concat(all_inventory_list)
+        # limit to only new or used based on the user's choice
+        print(filter_dict['condition'])
+        if filter_dict['condition'] != 'Both':
+            print("condition filter triggered")
+            all_inventory = all_inventory[all_inventory['condition'].str.contains(filter_dict['condition'])]
+        # loop through remaining filters in filter_frame
+        for key in filter_dict.keys():
+            if key not in ['model', 'zip_code', 'max_distance', 'condition'] and filter_dict[key] != '':
+                all_inventory = all_inventory[all_inventory[key].str.contains(filter_dict[key], na=False)]
+        return all_inventory.merge(dealer_frame, on='id')
+    else:
+        return pd.DataFrame({'error': [
+            'No dealerships nearby have inventory that match your search']})
