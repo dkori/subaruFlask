@@ -3,7 +3,7 @@
     <p>Enter your zip code and the maximum distance you're willing to travel to pick up your subaru</p>
     <p>Zip Code: <input type = "text" name = "zip_code" /></p>
     <p>Maximum travel distance (miles): <input type = "text" name = "max_distance" /></p>
-    <p><select name="model" id="model">
+    <p>Choose model<select name="model" id="model">
         {% for model in models %}
             <option value="{{model}}" SELECTED>{{model}}</option>"
         {% endfor %}
