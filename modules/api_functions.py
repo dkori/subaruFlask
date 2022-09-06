@@ -93,7 +93,8 @@ def get_all_inventory(dealer_frame, filter_dict={}):
             except:
                 print('inventory api call did not return valid json')
                 print(inventory_response.status_code)
-                print(inventory_response.text)
+                print(inventory_response.url)
+                #print(inventory_response.text)
     # return error data frame if all inventory status codes failed
     if not any([x==200] for x in status_codes):
         return pd.DataFrame({'error':['Succeeded in retrieving dealer list, but all API calls for inventory failed. Please try again later']})
