@@ -7,7 +7,11 @@ def get_dealerships(zip_code, max_distance):
     retail_api = 'https://www.subaru.com/services/dealers/distances/by/zipcode?zipcode={zipcode}&count=750&type=Active'.format(
         zipcode=zip_code)
     # call the api and parse json results
-    dealer_json = requests.get(retail_api).json()
+    dealer_response = requests.get(retail_api)
+    if dealer_response.status_code==200:
+        dealer_json = dealer_response.json()
+    else:
+        return pd.DataFrame({'error': ['Failed to retrieve dealership distances. Please try again later']})
 
     # create a recursive function that flattens out each item in the dealer_json
     def flatten_recurs(obj):
@@ -35,6 +39,9 @@ def get_dealerships(zip_code, max_distance):
 
 # write a function that takes dealer_frame, max_distance as arguments, and returns a dictionary of inventory
 def get_all_inventory(dealer_frame, filter_dict={}):
+    # check if the dealer frame api call worked
+    if dealer_frame == pd.DataFrame({'error': ['failed to retrieve dealership distances']}):
+        return dealer_frame
     # need a function that returns a dictionary parsing out the relevant info for each inventory object,
     # which should correspond to a given car on that dealership
     def parse_inventory_model(obj, dealer_url):
@@ -56,7 +63,10 @@ def get_all_inventory(dealer_frame, filter_dict={}):
         for attr in obj['attributes']:
             inventory_dict[attr['name']] = attr['value']
         return inventory_dict
+    # list to store inventory parsed output
     all_inventory_list = list()
+    # list to store status codes for error handling
+    status_codes = list()
     # iterate through rows of within distance
     for i in range(dealer_frame.shape[0]):
         # limit to row for given dealer
@@ -70,6 +80,8 @@ def get_all_inventory(dealer_frame, filter_dict={}):
             inventory_url += '?model=' + filter_dict['model']
         # call api for inventory_url to get inventory
         inventory_response = requests.get(inventory_url)
+        # append status_code to status_codes
+        status_codes.append(inventory_response.status_code)
         if inventory_response.status_code==200:
             inventory = inventory_response.json()['inventory']
             # create dataFrame of parsed inventory info
@@ -77,6 +89,9 @@ def get_all_inventory(dealer_frame, filter_dict={}):
             # add dealer_id to dealer_inventory
             dealer_inventory['id'] = dealer_row['id']
             all_inventory_list.append(dealer_inventory)
+    # return error data frame if all inventory status codes failed
+    if not any([x==200] for x in status_codes):
+        return pd.DataFrame({'error':['Succeeded in retrieving dealer list, but all API calls for inventory failed. Please try again later']})
     all_inventory = pd.concat(all_inventory_list)
     # limit to only new or used based on the user's choice
     print(filter_dict['condition'])
