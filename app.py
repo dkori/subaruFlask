@@ -24,4 +24,4 @@ def data():
         return render_template('simple.html',
                                tables=[inventory_frame.to_html(classes='data', na_rep=" ")],
                                titles=inventory_frame.columns.values)
-#app.run(host='localhost', port=5014)
+#app.run(host='localhost', port=5016)

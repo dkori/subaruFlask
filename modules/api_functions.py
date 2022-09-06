@@ -40,7 +40,7 @@ def get_dealerships(zip_code, max_distance):
 # write a function that takes dealer_frame, max_distance as arguments, and returns a dictionary of inventory
 def get_all_inventory(dealer_frame, filter_dict={}):
     # check if the dealer frame api call worked
-    if dealer_frame == pd.DataFrame({'error': ['failed to retrieve dealership distances']}):
+    if 'error' in dealer_frame.columns:
         return dealer_frame
     # need a function that returns a dictionary parsing out the relevant info for each inventory object,
     # which should correspond to a given car on that dealership
