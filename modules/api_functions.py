@@ -83,12 +83,17 @@ def get_all_inventory(dealer_frame, filter_dict={}):
         # append status_code to status_codes
         status_codes.append(inventory_response.status_code)
         if inventory_response.status_code==200:
-            inventory = inventory_response.json()['inventory']
-            # create dataFrame of parsed inventory info
-            dealer_inventory = pd.DataFrame([parse_inventory_model(x, dealer_url) for x in inventory])
-            # add dealer_id to dealer_inventory
-            dealer_inventory['id'] = dealer_row['id']
-            all_inventory_list.append(dealer_inventory)
+            try:
+                inventory = inventory_response.json()['inventory']
+                # create dataFrame of parsed inventory info
+                dealer_inventory = pd.DataFrame([parse_inventory_model(x, dealer_url) for x in inventory])
+                # add dealer_id to dealer_inventory
+                dealer_inventory['id'] = dealer_row['id']
+                all_inventory_list.append(dealer_inventory)
+            except:
+                print('inventory api call did not return valid json')
+                print(inventory_response.status_code)
+                print(inventory_response.text)
     # return error data frame if all inventory status codes failed
     if not any([x==200] for x in status_codes):
         return pd.DataFrame({'error':['Succeeded in retrieving dealer list, but all API calls for inventory failed. Please try again later']})
