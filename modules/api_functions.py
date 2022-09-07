@@ -36,7 +36,7 @@ def get_dealerships(zip_code, max_distance):
     within_distance = dealer_frame[dealer_frame['distance'] <= float(max_distance)]
     print('Found {rows} dealerships within distance of {zipcode}'.format(rows=str(within_distance.shape[0]),
                                                                           zipcode=zip_code))
-    return
+    return within_distance
 
 
 # write a function that takes dealer_frame, max_distance as arguments, and returns a dictionary of inventory
