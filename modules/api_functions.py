@@ -72,13 +72,15 @@ def get_all_inventory(dealer_frame, filter_dict={}):
         dealer_row = dealer_frame.iloc[i]
         # extract dealer url
         dealer_url = dealer_row['siteUrl']
+        # set dealer_url as referrer in api request header
+        headers = {'referrer': dealer_url}
         # make inventory api call url for given dealership
         inventory_url = '{dealer_url}/apis/widget/INVENTORY_LISTING_DEFAULT_AUTO_ALL:inventory-data-bus1/getInventory'.format(dealer_url=dealer_url)
         # apply the model filter, I don't know endpoints for other filters so filter those downstream
         if filter_dict['model'] != '':
             inventory_url += '?model=' + filter_dict['model']
         # call api for inventory_url to get inventory
-        inventory_response = requests.get(inventory_url)
+        inventory_response = requests.get(inventory_url, headers=headers)
         # append status_code to status_codes
         status_codes.append(inventory_response.status_code)
         if inventory_response.status_code==200:
@@ -88,21 +90,23 @@ def get_all_inventory(dealer_frame, filter_dict={}):
                 print('inventory api call did not return valid json')
                 print(inventory_response.status_code)
                 print(inventory_response.url)
-                try:
+                inventory = None
+            try:
+                if inventory is not None:
                     # create dataFrame of parsed inventory info
                     dealer_inventory = pd.DataFrame([parse_inventory_model(x, dealer_url) for x in inventory])
                     # add dealer_id to dealer_inventory
                     dealer_inventory['id'] = dealer_row['id']
                     all_inventory_list.append(dealer_inventory)
-                except:
-                    print("inventory api returned valid json, but parse_inventory_model function failed")
+            except:
+                print("inventory api returned valid json, but parse_inventory_model function failed")
                 #print(inventory_response.text)
     # return error data frame if all inventory status codes failed
     if not any([x==200] for x in status_codes):
         return pd.DataFrame({'error':['Succeeded in retrieving dealer list, but all API calls for inventory failed. Please try again later']})
     else:
-        print("{} dealerships checked, no inventory matching criteria found".format(
-            str(len([x for x in status_codes if x==200]))))
+        print("{} dealerships called with API".format(
+            str(len([x for x in status_codes if x == 200]))))
     if len(all_inventory_list)>=1:
         all_inventory = pd.concat(all_inventory_list)
         # limit to only new or used based on the user's choice
